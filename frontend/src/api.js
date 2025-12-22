@@ -15,7 +15,7 @@ export async function healthCheck() {
 }
 
 /**
- * Получить список причесок
+ * Получить список всех причесок
  */
 export async function getHairstyles() {
   const response = await fetch(`${API_URL}/api/hairstyles`);
@@ -23,7 +23,23 @@ export async function getHairstyles() {
 }
 
 /**
- * Трансформировать прическу
+ * Получить список женских причесок
+ */
+export async function getFemaleHairstyles() {
+  const response = await fetch(`${API_URL}/api/hairstyles/female`);
+  return response.json();
+}
+
+/**
+ * Получить список мужских причесок
+ */
+export async function getMaleHairstyles() {
+  const response = await fetch(`${API_URL}/api/hairstyles/male`);
+  return response.json();
+}
+
+/**
+ * Трансформировать прическу по ID
  * @param {string} imageBase64 - Изображение в base64
  * @param {number} styleId - ID выбранной прически
  */
@@ -48,11 +64,11 @@ export async function transformHairstyle(imageBase64, styleId) {
 }
 
 /**
- * Трансформация с кастомным промптом
+ * Трансформация с кастомным названием прически
  * @param {string} imageBase64 - Изображение в base64
- * @param {string} prompt - Кастомный промпт
+ * @param {string} hairstyleName - Название прически (свободный ввод)
  */
-export async function transformCustom(imageBase64, prompt) {
+export async function transformCustom(imageBase64, hairstyleName) {
   const response = await fetch(`${API_URL}/api/transform/custom`, {
     method: 'POST',
     headers: {
@@ -60,7 +76,7 @@ export async function transformCustom(imageBase64, prompt) {
     },
     body: JSON.stringify({
       image: imageBase64,
-      prompt: prompt,
+      hairstyle: hairstyleName,
     }),
   });
 
@@ -75,6 +91,8 @@ export async function transformCustom(imageBase64, prompt) {
 export default {
   healthCheck,
   getHairstyles,
+  getFemaleHairstyles,
+  getMaleHairstyles,
   transformHairstyle,
   transformCustom,
 };

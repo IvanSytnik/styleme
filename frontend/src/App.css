@@ -1,5 +1,5 @@
 /* ============================================
-   StyleMe App - Styles
+   StyleMe App - Styles v2.0
    ============================================ */
 
 * {
@@ -18,6 +18,8 @@
   --violet-200: #ddd6fe;
   --violet-500: #8b5cf6;
   --violet-600: #7c3aed;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -360,51 +362,113 @@ body {
   font-weight: 500;
 }
 
-/* Categories */
-.categories {
+/* Custom Input Section */
+.custom-input-section {
+  background: white;
+  border-radius: 20px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.custom-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 0.75rem;
+}
+
+.custom-input {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.custom-input:focus {
+  border-color: var(--violet-500);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.custom-input.active {
+  border-color: var(--violet-500);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(244, 63, 94, 0.05));
+}
+
+.custom-input::placeholder {
+  color: var(--gray-400);
+}
+
+.custom-selected {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(244, 63, 94, 0.1));
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: var(--violet-600);
+}
+
+.custom-selected strong {
+  color: var(--gray-800);
+}
+
+/* Gender Tabs */
+.gender-tabs {
   display: flex;
   gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.5rem;
-  margin: 0 -1rem;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  margin-bottom: 1rem;
+  background: var(--gray-100);
+  padding: 0.25rem;
+  border-radius: 16px;
 }
 
-.categories::-webkit-scrollbar {
-  display: none;
-}
-
-.category-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
+.gender-tab {
+  flex: 1;
+  padding: 0.875rem 1rem;
   border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  background: white;
-  color: var(--gray-600);
+  background: transparent;
+  color: var(--gray-500);
 }
 
-.category-btn.active {
-  background: linear-gradient(135deg, var(--rose-500), var(--violet-500));
-  color: white;
-  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.3);
+.gender-tab.active {
+  background: white;
+  color: var(--gray-800);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gender-tab:hover:not(.active) {
+  color: var(--gray-700);
 }
 
 /* Styles Grid */
 .styles-section {
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
 .styles-section h2 {
   font-size: 1.125rem;
   font-weight: 700;
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.styles-count {
+  background: var(--gray-200);
+  color: var(--gray-600);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
 }
 
 .styles-grid {
@@ -437,20 +501,15 @@ body {
 }
 
 .style-emoji {
-  font-size: 2rem;
+  font-size: 1.75rem;
   display: block;
   margin-bottom: 0.5rem;
 }
 
 .style-name {
   font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.style-category {
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-  opacity: 0.7;
+  font-size: 0.8rem;
+  line-height: 1.3;
 }
 
 .style-check {
@@ -591,5 +650,9 @@ body {
 
   .hero h1 {
     font-size: 2.25rem;
+  }
+
+  .styles-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
