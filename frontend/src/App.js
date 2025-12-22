@@ -51,21 +51,30 @@ function App() {
     }
   };
 
-  // Запуск камеры
+ // Запуск камеры
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 640, height: 480 },
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false,
       });
       setCameraStream(stream);
       setIsCapturing(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
     } catch (err) {
-      setError('Не удалось получить доступ к камере');
+      console.error('Camera error:', err);
+      setError('Не удалось получить доступ к камере: ' + err.message);
     }
   };
+
+  // Подключение потока к video элементу (добавь после startCamera)
+  React.useEffect(() => {
+    if (isCapturing && cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.play().catch(err => {
+        console.error('Video play error:', err);
+      });
+    }
+  }, [isCapturing, cameraStream]);
 
   // Съёмка фото
   const capturePhoto = () => {
