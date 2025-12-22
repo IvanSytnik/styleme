@@ -558,10 +558,7 @@ app.post('/api/transform/custom', upload.single('image'), async (req, res) => {
 });
 
 // Трансформация с фото-референсом прически
-app.post('/api/transform/reference', upload.fields([
-  { name: 'image', maxCount: 1 },
-  { name: 'reference', maxCount: 1 }
-]), async (req, res) => {
+app.post('/api/transform/reference', async (req, res) => {
   const startTime = Date.now();
 
   try {
@@ -573,24 +570,16 @@ app.post('/api/transform/reference', upload.fields([
     }
 
     // Получаем основное фото
-    let mainImageBuffer;
-    if (req.files?.image?.[0]) {
-      mainImageBuffer = req.files.image[0].buffer;
-    } else if (req.body.image) {
-      mainImageBuffer = fromBase64(req.body.image);
-    } else {
+    if (!req.body.image) {
       return res.status(400).json({ success: false, error: 'Основное фото не предоставлено' });
     }
+    const mainImageBuffer = fromBase64(req.body.image);
 
     // Получаем фото-референс прически
-    let referenceImageBuffer;
-    if (req.files?.reference?.[0]) {
-      referenceImageBuffer = req.files.reference[0].buffer;
-    } else if (req.body.reference) {
-      referenceImageBuffer = fromBase64(req.body.reference);
-    } else {
+    if (!req.body.reference) {
       return res.status(400).json({ success: false, error: 'Фото с прической не предоставлено' });
     }
+    const referenceImageBuffer = fromBase64(req.body.reference);
 
     console.log('[Reference Transform] Processing with reference image...');
 
@@ -602,7 +591,7 @@ app.post('/api/transform/reference', upload.fields([
     const referenceDataUrl = toDataUrl(referenceOptimized);
 
     // Промпт для копирования прически с референса
-    const prompt = `Copy the exact hairstyle from the second image and apply it to the person in the first image. Keep the face of the first person exactly the same, only change their hair to match the hairstyle in the second image. Make it look natural and photorealistic.`;
+    const prompt = `Copy the exact hairstyle from the second image and apply it to the person in the first image. Keep the face of the first person exactly the same, only change their hair to match the hairstyle, color, and style in the second image. Make it look natural and photorealistic.`;
 
     // Вызываем nano-banana с двумя изображениями
     const input = {
