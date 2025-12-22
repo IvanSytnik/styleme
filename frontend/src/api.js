@@ -88,6 +88,31 @@ export async function transformCustom(imageBase64, hairstyleName) {
   return response.json();
 }
 
+/**
+ * Трансформация по референсному фото
+ * @param {string} imageBase64 - Основное фото пользователя
+ * @param {string} referenceImageBase64 - Фото с желаемой прической
+ */
+export async function transformWithReference(imageBase64, referenceImageBase64) {
+  const response = await fetch(`${API_URL}/api/transform/reference`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      image: imageBase64,
+      reference: referenceImageBase64,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Ошибка при обработке');
+  }
+
+  return response.json();
+}
+
 export default {
   healthCheck,
   getHairstyles,
@@ -95,4 +120,5 @@ export default {
   getMaleHairstyles,
   transformHairstyle,
   transformCustom,
+  transformWithReference,
 };

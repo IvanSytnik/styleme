@@ -16,6 +16,8 @@
   --rose-500: #f43f5e;
   --violet-100: #ede9fe;
   --violet-200: #ddd6fe;
+  --violet-300: #c4b5fd;
+  --violet-400: #a78bfa;
   --violet-500: #8b5cf6;
   --violet-600: #7c3aed;
   --blue-500: #3b82f6;
@@ -426,6 +428,11 @@ body {
   border-radius: 16px;
 }
 
+.gender-tabs.three-tabs .gender-tab {
+  font-size: 0.875rem;
+  padding: 0.75rem 0.5rem;
+}
+
 .gender-tab {
   flex: 1;
   padding: 0.875rem 1rem;
@@ -447,6 +454,113 @@ body {
 
 .gender-tab:hover:not(.active) {
   color: var(--gray-700);
+}
+
+/* Reference Section */
+.reference-section {
+  margin-top: 1rem;
+}
+
+.reference-info {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.reference-info h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.reference-info p {
+  color: var(--gray-500);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.reference-upload-btn {
+  width: 100%;
+  padding: 2rem;
+  border: 2px dashed var(--violet-300);
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(244, 63, 94, 0.05));
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.reference-upload-btn:hover {
+  border-color: var(--violet-500);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(244, 63, 94, 0.1));
+  transform: translateY(-2px);
+}
+
+.reference-upload-icon {
+  font-size: 3rem;
+}
+
+.reference-upload-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.reference-upload-hint {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  text-align: center;
+}
+
+.reference-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.reference-image-container {
+  position: relative;
+  width: 200px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+  border: 3px solid var(--violet-400);
+}
+
+.reference-image-container img {
+  width: 100%;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+}
+
+.reference-remove {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.reference-remove:hover {
+  background: rgba(220, 38, 38, 0.8);
+}
+
+.reference-ready {
+  color: var(--violet-600);
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 /* Styles Grid */

@@ -417,6 +417,90 @@ app.post('/api/transform', upload.single('image'), async (req, res) => {
   }
 });
 
+// Трансформация по референсному фото (прическа с фото)
+app.post('/api/transform/reference', upload.single('image'), async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    if (!config.replicate.apiToken) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'REPLICATE_API_TOKEN не настроен' 
+      });
+    }
+
+    // Основное фото пользователя
+    let imageBuffer;
+    if (req.file) {
+      imageBuffer = req.file.buffer;
+    } else if (req.body.image) {
+      imageBuffer = fromBase64(req.body.image);
+    } else {
+      return res.status(400).json({ success: false, error: 'Основное изображение не предоставлено' });
+    }
+
+    // Референсное фото с прической
+    const referenceImage = req.body.referenceImage;
+    if (!referenceImage) {
+      return res.status(400).json({ success: false, error: 'Референсное фото не предоставлено' });
+    }
+
+    console.log(`[Reference Transform] Processing with reference photo...`);
+
+    const optimizedBuffer = await optimizeImage(imageBuffer);
+    const imageDataUrl = toDataUrl(optimizedBuffer);
+    
+    // Оптимизируем референсное фото тоже
+    const referenceBuffer = fromBase64(referenceImage);
+    const optimizedReferenceBuffer = await optimizeImage(referenceBuffer);
+    const referenceDataUrl = toDataUrl(optimizedReferenceBuffer);
+    
+    // Промпт для переноса прически с референса
+    const prompt = `Transfer the exact hairstyle from the second image to the person in the first image. Copy the hair style, length, texture, and color from the reference photo. Keep the face exactly the same, only change the hair to match the reference. Make it look natural and photorealistic.`;
+    
+    // Передаём оба изображения в nano-banana
+    const input = {
+      prompt: prompt,
+      image_input: [imageDataUrl, referenceDataUrl],
+    };
+
+    console.log('[nano-banana] Starting reference-based generation...');
+    
+    const output = await replicate.run(config.replicate.model, { input });
+    
+    let resultImageUrl;
+    if (output && typeof output.url === 'function') {
+      resultImageUrl = output.url();
+    } else if (typeof output === 'string') {
+      resultImageUrl = output;
+    } else if (Array.isArray(output) && output.length > 0) {
+      const first = output[0];
+      if (typeof first === 'string') resultImageUrl = first;
+      else if (first && typeof first.url === 'function') resultImageUrl = first.url();
+    } else {
+      throw new Error('Unexpected output format');
+    }
+
+    const processingTime = Date.now() - startTime;
+    console.log(`[Reference Transform] Done in ${processingTime}ms`);
+
+    res.json({
+      success: true,
+      data: { 
+        resultImage: resultImageUrl,
+        style: 'Прическа с фото',
+        processingTime,
+      },
+    });
+  } catch (error) {
+    console.error('[Reference Transform] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Ошибка обработки',
+    });
+  }
+});
+
 // Трансформация с кастомным названием прически
 app.post('/api/transform/custom', upload.single('image'), async (req, res) => {
   const startTime = Date.now();
@@ -466,6 +550,94 @@ app.post('/api/transform/custom', upload.single('image'), async (req, res) => {
     });
   } catch (error) {
     console.error('[Custom Transform] Error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Ошибка обработки',
+    });
+  }
+});
+
+// Трансформация с фото-референсом прически
+app.post('/api/transform/reference', upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'reference', maxCount: 1 }
+]), async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    if (!config.replicate.apiToken) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'REPLICATE_API_TOKEN не настроен' 
+      });
+    }
+
+    // Получаем основное фото
+    let mainImageBuffer;
+    if (req.files?.image?.[0]) {
+      mainImageBuffer = req.files.image[0].buffer;
+    } else if (req.body.image) {
+      mainImageBuffer = fromBase64(req.body.image);
+    } else {
+      return res.status(400).json({ success: false, error: 'Основное фото не предоставлено' });
+    }
+
+    // Получаем фото-референс прически
+    let referenceImageBuffer;
+    if (req.files?.reference?.[0]) {
+      referenceImageBuffer = req.files.reference[0].buffer;
+    } else if (req.body.reference) {
+      referenceImageBuffer = fromBase64(req.body.reference);
+    } else {
+      return res.status(400).json({ success: false, error: 'Фото с прической не предоставлено' });
+    }
+
+    console.log('[Reference Transform] Processing with reference image...');
+
+    // Оптимизируем оба изображения
+    const mainOptimized = await optimizeImage(mainImageBuffer);
+    const referenceOptimized = await optimizeImage(referenceImageBuffer);
+    
+    const mainDataUrl = toDataUrl(mainOptimized);
+    const referenceDataUrl = toDataUrl(referenceOptimized);
+
+    // Промпт для копирования прически с референса
+    const prompt = `Copy the exact hairstyle from the second image and apply it to the person in the first image. Keep the face of the first person exactly the same, only change their hair to match the hairstyle in the second image. Make it look natural and photorealistic.`;
+
+    // Вызываем nano-banana с двумя изображениями
+    const input = {
+      prompt: prompt,
+      image_input: [mainDataUrl, referenceDataUrl],
+    };
+
+    console.log('[nano-banana] Starting reference generation...');
+    const output = await replicate.run(config.replicate.model, { input });
+    
+    let resultImageUrl;
+    if (output && typeof output.url === 'function') {
+      resultImageUrl = output.url();
+    } else if (typeof output === 'string') {
+      resultImageUrl = output;
+    } else if (Array.isArray(output) && output.length > 0) {
+      const first = output[0];
+      resultImageUrl = typeof first === 'string' ? first : first?.url?.();
+    } else {
+      throw new Error('Unexpected output format');
+    }
+
+    const processingTime = Date.now() - startTime;
+    console.log(`[Reference Transform] Done in ${processingTime}ms`);
+
+    res.json({
+      success: true,
+      data: {
+        resultImage: resultImageUrl,
+        style: 'Прическа с фото',
+        processingTime,
+      },
+    });
+  } catch (error) {
+    console.error('[Reference Transform] Error:', error.message);
     res.status(500).json({
       success: false,
       error: error.message || 'Ошибка обработки',

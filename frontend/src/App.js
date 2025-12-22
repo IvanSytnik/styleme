@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { transformHairstyle, transformCustom } from './api';
+import { transformHairstyle, transformCustom, transformWithReference } from './api';
 import './App.css';
 
 // Женские прически (20)
@@ -53,26 +53,33 @@ const MALE_HAIRSTYLES = [
 function App() {
   const [screen, setScreen] = useState('upload');
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [referenceImage, setReferenceImage] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [customHairstyle, setCustomHairstyle] = useState('');
-  const [useCustom, setUseCustom] = useState(false);
   const [resultImage, setResultImage] = useState(null);
-  const [activeGender, setActiveGender] = useState('female'); // 'female' или 'male'
+  const [activeTab, setActiveTab] = useState('female'); // 'female', 'male', 'reference'
   const [isCapturing, setIsCapturing] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(0);
 
   const fileInputRef = useRef(null);
+  const referenceInputRef = useRef(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+  // Определить режим выбора
+  const isReferenceMode = activeTab === 'reference';
+  const isCustomMode = customHairstyle.trim() && !isReferenceMode && !selectedStyle;
+
   // Получить текущий список причесок
   const getCurrentHairstyles = () => {
-    return activeGender === 'female' ? FEMALE_HAIRSTYLES : MALE_HAIRSTYLES;
+    if (activeTab === 'female') return FEMALE_HAIRSTYLES;
+    if (activeTab === 'male') return MALE_HAIRSTYLES;
+    return [];
   };
 
-  // Загрузка файла
+  // Загрузка основного фото
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -85,6 +92,23 @@ function App() {
         setUploadedImage(event.target.result);
         setError(null);
         setScreen('select');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Загрузка фото-референса
+  const handleReferenceUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Файл слишком большой. Максимум 10MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setReferenceImage(event.target.result);
+        setError(null);
       };
       reader.readAsDataURL(file);
     }
@@ -142,7 +166,6 @@ function App() {
   // Выбор прически из списка
   const selectStyle = (style) => {
     setSelectedStyle(style);
-    setUseCustom(false);
     setCustomHairstyle('');
   };
 
@@ -150,21 +173,34 @@ function App() {
   const handleCustomInput = (value) => {
     setCustomHairstyle(value);
     if (value.trim()) {
-      setUseCustom(true);
       setSelectedStyle(null);
-    } else {
-      setUseCustom(false);
+    }
+  };
+
+  // Смена таба
+  const changeTab = (tab) => {
+    setActiveTab(tab);
+    setSelectedStyle(null);
+    setCustomHairstyle('');
+    if (tab !== 'reference') {
+      setReferenceImage(null);
     }
   };
 
   // Проверка готовности к обработке
   const isReadyToProcess = () => {
-    return (selectedStyle && !useCustom) || (useCustom && customHairstyle.trim());
+    if (isReferenceMode) {
+      return referenceImage !== null;
+    }
+    return selectedStyle || customHairstyle.trim();
   };
 
   // Получить название выбранной прически
   const getSelectedName = () => {
-    if (useCustom && customHairstyle.trim()) {
+    if (isReferenceMode && referenceImage) {
+      return 'Прическа с фото';
+    }
+    if (customHairstyle.trim()) {
       return customHairstyle.trim();
     }
     if (selectedStyle) {
@@ -191,8 +227,11 @@ function App() {
 
     try {
       let result;
-      
-      if (useCustom && customHairstyle.trim()) {
+
+      if (isReferenceMode && referenceImage) {
+        // Прическа с фото-референса
+        result = await transformWithReference(uploadedImage, referenceImage);
+      } else if (customHairstyle.trim()) {
         // Кастомная прическа
         result = await transformCustom(uploadedImage, customHairstyle.trim());
       } else if (selectedStyle) {
@@ -221,14 +260,24 @@ function App() {
   // Сброс
   const reset = () => {
     setUploadedImage(null);
+    setReferenceImage(null);
     setSelectedStyle(null);
     setCustomHairstyle('');
-    setUseCustom(false);
     setResultImage(null);
     setScreen('upload');
     setError(null);
     setProgress(0);
+    setActiveTab('female');
     stopCamera();
+  };
+
+  // Попробовать другую прическу
+  const tryAnother = () => {
+    setSelectedStyle(null);
+    setCustomHairstyle('');
+    setReferenceImage(null);
+    setResultImage(null);
+    setScreen('select');
   };
 
   // Сохранение результата
@@ -278,7 +327,7 @@ function App() {
               <h1>
                 Найди свой <span className="gradient-text">идеальный стиль</span>
               </h1>
-              <p>Загрузи фото и примерь 40 причесок с помощью AI</p>
+              <p>Загрузи фото и примерь 40+ причесок с помощью AI</p>
             </div>
 
             {!isCapturing ? (
@@ -358,61 +407,113 @@ function App() {
               <div className="preview-badge">Твоё фото загружено ✓</div>
             </div>
 
-            {/* Поле ввода своей прически */}
-            <div className="custom-input-section">
-              <label className="custom-label">Или введи свою прическу:</label>
-              <input
-                type="text"
-                className={`custom-input ${useCustom ? 'active' : ''}`}
-                placeholder="Например: розовые волосы до плеч..."
-                value={customHairstyle}
-                onChange={(e) => handleCustomInput(e.target.value)}
-              />
-              {useCustom && customHairstyle.trim() && (
-                <div className="custom-selected">
-                  ✨ Будет применена: <strong>{customHairstyle}</strong>
-                </div>
-              )}
-            </div>
-
-            {/* Переключатель Женские/Мужские */}
-            <div className="gender-tabs">
+            {/* Табы: Женские / Мужские / С фото */}
+            <div className="gender-tabs three-tabs">
               <button
-                className={`gender-tab ${activeGender === 'female' ? 'active' : ''}`}
-                onClick={() => setActiveGender('female')}
+                className={`gender-tab ${activeTab === 'female' ? 'active' : ''}`}
+                onClick={() => changeTab('female')}
               >
                 👩 Женские
               </button>
               <button
-                className={`gender-tab ${activeGender === 'male' ? 'active' : ''}`}
-                onClick={() => setActiveGender('male')}
+                className={`gender-tab ${activeTab === 'male' ? 'active' : ''}`}
+                onClick={() => changeTab('male')}
               >
                 👨 Мужские
               </button>
+              <button
+                className={`gender-tab ${activeTab === 'reference' ? 'active' : ''}`}
+                onClick={() => changeTab('reference')}
+              >
+                📷 С фото
+              </button>
             </div>
 
-            {/* Сетка причесок */}
-            <div className="styles-section">
-              <h2>
-                {activeGender === 'female' ? '👩 Женские прически' : '👨 Мужские прически'}
-                <span className="styles-count">{getCurrentHairstyles().length}</span>
-              </h2>
-              <div className="styles-grid">
-                {getCurrentHairstyles().map((style) => (
+            {/* Контент в зависимости от таба */}
+            {isReferenceMode ? (
+              /* Раздел "Прическа с фото" */
+              <div className="reference-section">
+                <div className="reference-info">
+                  <h2>📷 Прическа с фото</h2>
+                  <p>Загрузи фото с прической, которую хочешь примерить. AI скопирует эту прическу на твоё фото.</p>
+                </div>
+
+                {referenceImage ? (
+                  <div className="reference-preview">
+                    <div className="reference-image-container">
+                      <img src={referenceImage} alt="Референс прически" />
+                      <button 
+                        className="reference-remove"
+                        onClick={() => setReferenceImage(null)}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p className="reference-ready">✓ Фото с прической загружено</p>
+                  </div>
+                ) : (
                   <button
-                    key={style.id}
-                    onClick={() => selectStyle(style)}
-                    className={`style-card ${selectedStyle?.id === style.id && !useCustom ? 'selected' : ''}`}
+                    onClick={() => referenceInputRef.current?.click()}
+                    className="reference-upload-btn"
                   >
-                    <span className="style-emoji">{style.emoji}</span>
-                    <p className="style-name">{style.name}</p>
-                    {selectedStyle?.id === style.id && !useCustom && (
-                      <div className="style-check">✓</div>
-                    )}
+                    <span className="reference-upload-icon">📸</span>
+                    <span className="reference-upload-text">Загрузить фото с прической</span>
+                    <span className="reference-upload-hint">Найди фото знаменитости или модели с нужной прической</span>
                   </button>
-                ))}
+                )}
+
+                <input
+                  ref={referenceInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleReferenceUpload}
+                  hidden
+                />
               </div>
-            </div>
+            ) : (
+              /* Разделы "Женские" и "Мужские" */
+              <>
+                {/* Поле ввода своей прически */}
+                <div className="custom-input-section">
+                  <label className="custom-label">Или введи свою прическу:</label>
+                  <input
+                    type="text"
+                    className={`custom-input ${customHairstyle.trim() ? 'active' : ''}`}
+                    placeholder="Например: розовые волосы до плеч..."
+                    value={customHairstyle}
+                    onChange={(e) => handleCustomInput(e.target.value)}
+                  />
+                  {customHairstyle.trim() && (
+                    <div className="custom-selected">
+                      ✨ Будет применена: <strong>{customHairstyle}</strong>
+                    </div>
+                  )}
+                </div>
+
+                {/* Сетка причесок */}
+                <div className="styles-section">
+                  <h2>
+                    {activeTab === 'female' ? '👩 Женские прически' : '👨 Мужские прически'}
+                    <span className="styles-count">{getCurrentHairstyles().length}</span>
+                  </h2>
+                  <div className="styles-grid">
+                    {getCurrentHairstyles().map((style) => (
+                      <button
+                        key={style.id}
+                        onClick={() => selectStyle(style)}
+                        className={`style-card ${selectedStyle?.id === style.id ? 'selected' : ''}`}
+                      >
+                        <span className="style-emoji">{style.emoji}</span>
+                        <p className="style-name">{style.name}</p>
+                        {selectedStyle?.id === style.id && (
+                          <div className="style-check">✓</div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
 
             {/* Кнопка обработки */}
             {isReadyToProcess() && (
@@ -487,7 +588,7 @@ function App() {
               <button onClick={saveResult} className="btn btn-primary">
                 💾 Сохранить результат
               </button>
-              <button onClick={() => { setScreen('select'); setSelectedStyle(null); setCustomHairstyle(''); setUseCustom(false); }} className="btn btn-secondary">
+              <button onClick={tryAnother} className="btn btn-secondary">
                 🔄 Попробовать другую прическу
               </button>
               <button onClick={shareResult} className="btn btn-tertiary">
