@@ -100,9 +100,10 @@ export async function transformWithReference(imageBase64, referenceImageBase64) 
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      image: imageBase64,
-      reference: referenceImageBase64,
-    }),
+    image: imageBase64,
+    referenceImage: referenceImageBase64,
+  }),
+
   });
 
   if (!response.ok) {
