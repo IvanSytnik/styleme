@@ -1,240 +1,231 @@
-# StyleMe - AI Примерка причесок 💇‍♀️
+# StyleMe — AI Hairstyle Try-On 💇‍♀️
 
-Веб-приложение для примерки причесок с использованием **Google nano-banana** через Replicate.
+A web app for trying on hairstyles using **Google nano-banana** via **Replicate**.
 
 ---
 
-## 📁 Структура проекта
+## 📁 Project structure
 
-```
+```txt
 styleme/
-├── backend/                 # Node.js сервер
-│   ├── server.js           # Главный файл
-│   ├── config.js           # Конфигурация
-│   ├── package.json        # Зависимости
-│   └── .env.example        # Шаблон секретов
+├── backend/                 # Node.js server
+│   ├── server.js           # Main file
+│   ├── config.js           # Configuration
+│   ├── package.json        # Dependencies
+│   └── .env.example        # Secrets template
 │
-├── frontend/               # React приложение
+├── frontend/               # React app
 │   ├── src/
-│   │   ├── App.js          # Главный компонент
-│   │   ├── App.css         # Стили
-│   │   ├── api.js          # API клиент
-│   │   └── config.js       # Конфигурация
+│   │   ├── App.js          # Main component
+│   │   ├── App.css         # Styles
+│   │   ├── api.js          # API client
+│   │   └── config.js       # Configuration
 │   ├── public/
 │   │   └── index.html
 │   └── .env.example
 │
-├── .gitignore              # .env файлы НЕ попадут в Git
+├── .gitignore              # .env files should NOT go to Git
 └── README.md
 ```
 
 ---
 
-## 🔑 ШАГ 0: Получение API токена
+## 🔑 STEP 0: Get an API token (Replicate)
 
-**Это нужно сделать первым делом!**
+**Do this first!**
 
-1. Зайди на [replicate.com](https://replicate.com)
-2. Войди через GitHub
-3. Перейди в **Account → API tokens**
-4. Скопируй токен (начинается с `r8_...`)
+1. Go to https://replicate.com  
+2. Sign in with GitHub  
+3. Open **Account → API tokens**  
+4. Copy your token (starts with `r8_...`)
 
-**Стоимость:** ~$0.039 за одно фото
+**Cost:** ~$0.039 per photo
 
 ---
 
-## 🚀 ПОШАГОВАЯ ИНСТРУКЦИЯ
+## 🚀 Step-by-step setup (Local)
 
-### ШАГ 1: Установка Node.js
+### STEP 1: Install Node.js
 
-1. Скачай Node.js 18+ с [nodejs.org](https://nodejs.org/)
-2. Проверь установку:
+1. Download Node.js 18+ from https://nodejs.org/
+2. Verify:
 ```bash
-node --version   # v18.x.x или выше
-npm --version    # 9.x.x или выше
+node --version   # v18.x.x or higher
+npm --version    # 9.x.x or higher
 ```
 
 ---
 
-### ШАГ 2: Настройка Backend
+### STEP 2: Setup Backend
 
 ```bash
-# Перейди в папку backend
 cd styleme/backend
-
-# Установи зависимости
 npm install
-
-# Создай файл с секретами
 cp .env.example .env
 ```
 
-Открой файл `.env` и вставь свой токен:
+Edit `backend/.env`:
 
 ```env
 PORT=3001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
 
-# Вставь СВОЙ токен:
-REPLICATE_API_TOKEN=r8_твой_реальный_токен_здесь
+# Paste YOUR token:
+REPLICATE_API_TOKEN=r8_your_real_token_here
 ```
 
-**Запусти сервер:**
+Run backend:
 ```bash
 npm run dev
 ```
 
-Должно появиться:
-```
-╔═══════════════════════════════════════════╗
-║        StyleMe Backend Server v1.0        ║
-╠═══════════════════════════════════════════╣
-║  Port:     3001                           ║
-║  Mode:     development                    ║
-║  Model:    google/nano-banana             ║
-║  API Key:  ✓ Configured                   ║
-╚═══════════════════════════════════════════╝
-```
-
-**Проверь:** http://localhost:3001/health
+Health check:
+- http://localhost:3001/health
 
 ---
 
-### ШАГ 3: Настройка Frontend
+### STEP 3: Setup Frontend
 
 ```bash
-# В НОВОМ терминале перейди в frontend
 cd styleme/frontend
-
-# Установи зависимости
 npm install
-
-# Создай .env
 cp .env.example .env
 ```
 
-В файле `frontend/.env`:
+Edit `frontend/.env`:
+
 ```env
 REACT_APP_API_URL=http://localhost:3001
 ```
 
-**Запусти:**
+Run frontend:
 ```bash
 npm start
 ```
 
-**Открой:** http://localhost:3000
+Open:
+- http://localhost:3000
 
 ---
 
-### ШАГ 4: Загрузка на GitHub
+## 🧠 GitHub (Push the project)
 
-#### 4.1 Создай репозиторий
-1. Зайди на [github.com](https://github.com)
-2. **"New repository"** → назови `styleme`
-3. Сделай **Private** (чтобы никто не видел)
-4. **НЕ** добавляй README
-5. **Create repository**
+### 1) Create a repository
 
-#### 4.2 Загрузи код
+1. Go to https://github.com
+2. **New repository** → name it `styleme`
+3. Set **Private**
+4. **Do NOT** add README
+5. Create repository
+
+### 2) Push code
+
+From the root folder `styleme/`:
+
 ```bash
-# В корневой папке styleme/
 git init
 git add .
 git commit -m "Initial commit"
 
-# Замени на СВОЙ URL:
-git remote add origin https://github.com/ТВОЙ_USERNAME/styleme.git
+# Replace with YOUR URL:
+git remote add origin https://github.com/YOUR_USERNAME/styleme.git
 git branch -M main
 git push -u origin main
 ```
 
-#### ⚠️ Проверь безопасность:
+### ⚠️ Security check
+
+`.env` files must NOT be committed.
+
 ```bash
 git status
 ```
-Файлы `.env` НЕ должны быть в списке!
 
 ---
 
-### ШАГ 5: Деплой Backend на Railway
+## ☁️ Deploy Backend to Railway
 
-#### 5.1 Регистрация
-1. Зайди на [railway.app](https://railway.app)
-2. Войди через GitHub
+### STEP 5.1: Sign up
+1. Go to https://railway.app
+2. Sign in with GitHub
 
-#### 5.2 Создай проект
-1. **"New Project"**
-2. **"Deploy from GitHub repo"**
-3. Выбери `styleme`
-4. Укажи папку: `backend`
+### STEP 5.2: Deploy from GitHub
+1. **New Project**
+2. **Deploy from GitHub repo**
+3. Select `styleme`
+4. Choose folder: `backend`
 
-#### 5.3 Добавь переменные
-В Railway → **Variables** добавь:
+### STEP 5.3: Add environment variables
+Railway → **Variables**:
 
-| Переменная | Значение |
-|------------|----------|
+| Variable | Value |
+|---------|-------|
 | `PORT` | `3001` |
 | `NODE_ENV` | `production` |
-| `FRONTEND_URL` | (пока пусто, заполнишь позже) |
-| `REPLICATE_API_TOKEN` | `r8_твой_токен` |
+| `FRONTEND_URL` | (leave empty for now) |
+| `REPLICATE_API_TOKEN` | `r8_your_token_here` |
 
-#### 5.4 Получи URL
-После деплоя Railway даст URL:
+### STEP 5.4: Get Railway URL
+After deploy, you’ll get something like:
 ```
 https://styleme-production-abc123.up.railway.app
 ```
-**Сохрани его!**
+Save it.
 
 ---
 
-### ШАГ 6: Деплой Frontend на Vercel
+## 🌐 Deploy Frontend to Vercel
 
-#### 6.1 Регистрация
-1. Зайди на [vercel.com](https://vercel.com)
-2. Войди через GitHub
+### STEP 6.1: Sign up
+1. Go to https://vercel.com
+2. Sign in with GitHub
 
-#### 6.2 Импорт проекта
-1. **"Add New" → "Project"**
-2. Выбери репозиторий `styleme`
-3. Настройки:
+### STEP 6.2: Import project
+1. **Add New → Project**
+2. Select repo `styleme`
+3. Configure:
    - **Root Directory:** `frontend`
    - **Framework:** Create React App
    - **Build Command:** `npm run build`
    - **Output Directory:** `build`
 
-#### 6.3 Добавь переменную
+### STEP 6.3: Add environment variable (Vercel)
+Set:
 ```
-REACT_APP_API_URL = https://твой-бэкенд.railway.app
+REACT_APP_API_URL = https://your-backend.railway.app
 ```
 
-#### 6.4 Deploy!
-
-Получишь URL: `https://styleme-xxx.vercel.app`
+### STEP 6.4: Deploy
+You’ll get a URL like:
+```
+https://styleme-xxx.vercel.app
+```
 
 ---
 
-### ШАГ 7: Связать всё вместе
+## 🔗 Connect Frontend + Backend (CORS)
 
-Вернись в **Railway → Variables** и обнови:
+Go back to **Railway → Variables** and set:
+
 ```
 FRONTEND_URL = https://styleme-xxx.vercel.app
 ```
 
-Railway автоматически передеплоит.
+Railway will redeploy automatically.
 
 ---
 
-## ✅ Готово!
+## ✅ Done
 
-Твоё приложение: `https://styleme-xxx.vercel.app`
+Your app is live:
+- `https://styleme-xxx.vercel.app`
 
 ---
 
-## 📱 Мобильное приложение
+## 📱 Mobile App Options
 
-### WebView (простой способ)
+### Option A: WebView (quick & simple)
 
 **React Native:**
 ```javascript
@@ -242,7 +233,7 @@ import { WebView } from 'react-native-webview';
 
 export default function App() {
   return (
-    <WebView 
+    <WebView
       source={{ uri: 'https://styleme-xxx.vercel.app' }}
       allowsInlineMediaPlayback={true}
     />
@@ -250,7 +241,8 @@ export default function App() {
 }
 ```
 
-### Capacitor (полноценное приложение)
+### Option B: Capacitor (full native wrapper)
+
 ```bash
 cd frontend
 npm install @capacitor/core @capacitor/cli
@@ -264,41 +256,43 @@ npx cap open ios
 
 ---
 
-## 💰 Стоимость
+## 💰 Costs
 
-- **Replicate nano-banana:** ~$0.039 за фото
-- **Railway:** Бесплатный тариф (500 часов/месяц)
-- **Vercel:** Бесплатный тариф
+- **Replicate nano-banana:** ~$0.039 per photo
+- **Railway:** Free tier (500 hours/month)
+- **Vercel:** Free tier
 
 ---
 
-## 🔧 Команды
+## 🔧 Useful commands
 
+### Backend
 ```bash
-# Backend
 cd backend
-npm run dev      # Разработка
-npm start        # Продакшен
+npm run dev      # Development
+npm start        # Production
+```
 
-# Frontend  
+### Frontend
+```bash
 cd frontend
-npm start        # Разработка
-npm run build    # Сборка
+npm start        # Development
+npm run build    # Build
 ```
 
 ---
 
-## ❓ Проблемы
+## ❓ Troubleshooting
 
-### CORS ошибка
-Проверь что `FRONTEND_URL` в Railway совпадает с URL на Vercel.
+### CORS error
+Make sure `FRONTEND_URL` (Railway Variables) exactly matches your Vercel frontend URL.
 
-### "API Key not configured"
-Проверь что `REPLICATE_API_TOKEN` добавлен в Railway Variables.
+### “API Key not configured”
+Make sure `REPLICATE_API_TOKEN` exists in Railway Variables (and locally in `backend/.env` for local dev).
 
-### Долгая обработка
-Nano-banana может обрабатывать 10-60 секунд. Это нормально.
+### Slow processing
+Nano-banana can take 10–60 seconds per image. That’s normal.
 
 ---
 
-Создано с ❤️
+Made with ❤️
