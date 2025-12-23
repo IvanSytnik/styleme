@@ -3,13 +3,19 @@
  */
 
 import config from './config';
+import { 
+  ApiResponse, 
+  TransformResult, 
+  HealthCheckResponse, 
+  HairstyleListItem 
+} from './types';
 
 const API_URL = config.apiUrl;
 
 /**
  * Проверка здоровья сервера
  */
-export async function healthCheck() {
+export async function healthCheck(): Promise<HealthCheckResponse> {
   const response = await fetch(`${API_URL}/health`);
   return response.json();
 }
@@ -17,7 +23,7 @@ export async function healthCheck() {
 /**
  * Получить список всех причесок
  */
-export async function getHairstyles() {
+export async function getHairstyles(): Promise<ApiResponse<HairstyleListItem[]>> {
   const response = await fetch(`${API_URL}/api/hairstyles`);
   return response.json();
 }
@@ -25,7 +31,7 @@ export async function getHairstyles() {
 /**
  * Получить список женских причесок
  */
-export async function getFemaleHairstyles() {
+export async function getFemaleHairstyles(): Promise<ApiResponse<HairstyleListItem[]>> {
   const response = await fetch(`${API_URL}/api/hairstyles/female`);
   return response.json();
 }
@@ -33,17 +39,18 @@ export async function getFemaleHairstyles() {
 /**
  * Получить список мужских причесок
  */
-export async function getMaleHairstyles() {
+export async function getMaleHairstyles(): Promise<ApiResponse<HairstyleListItem[]>> {
   const response = await fetch(`${API_URL}/api/hairstyles/male`);
   return response.json();
 }
 
 /**
  * Трансформировать прическу по ID
- * @param {string} imageBase64 - Изображение в base64
- * @param {number} styleId - ID выбранной прически
  */
-export async function transformHairstyle(imageBase64, styleId) {
+export async function transformHairstyle(
+  imageBase64: string, 
+  styleId: number
+): Promise<ApiResponse<TransformResult>> {
   const response = await fetch(`${API_URL}/api/transform`, {
     method: 'POST',
     headers: {
@@ -65,10 +72,11 @@ export async function transformHairstyle(imageBase64, styleId) {
 
 /**
  * Трансформация с кастомным названием прически
- * @param {string} imageBase64 - Изображение в base64
- * @param {string} hairstyleName - Название прически (свободный ввод)
  */
-export async function transformCustom(imageBase64, hairstyleName) {
+export async function transformCustom(
+  imageBase64: string, 
+  hairstyleName: string
+): Promise<ApiResponse<TransformResult>> {
   const response = await fetch(`${API_URL}/api/transform/custom`, {
     method: 'POST',
     headers: {
@@ -89,21 +97,21 @@ export async function transformCustom(imageBase64, hairstyleName) {
 }
 
 /**
- * Трансформация по референсному фото
- * @param {string} imageBase64 - Основное фото пользователя
- * @param {string} referenceImageBase64 - Фото с желаемой прической
+ * Трансформация с фото-референсом прически
  */
-export async function transformWithReference(imageBase64, referenceImageBase64) {
+export async function transformWithReference(
+  imageBase64: string, 
+  referenceBase64: string
+): Promise<ApiResponse<TransformResult>> {
   const response = await fetch(`${API_URL}/api/transform/reference`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-    image: imageBase64,
-    referenceImage: referenceImageBase64,
-  }),
-
+      image: imageBase64,
+      reference: referenceBase64,
+    }),
   });
 
   if (!response.ok) {
@@ -114,7 +122,7 @@ export async function transformWithReference(imageBase64, referenceImageBase64) 
   return response.json();
 }
 
-export default {
+const api = {
   healthCheck,
   getHairstyles,
   getFemaleHairstyles,
@@ -123,3 +131,5 @@ export default {
   transformCustom,
   transformWithReference,
 };
+
+export default api;

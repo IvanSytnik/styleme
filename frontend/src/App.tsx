@@ -1,87 +1,42 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { transformHairstyle, transformCustom, transformWithReference } from './api';
+import { FEMALE_HAIRSTYLES, MALE_HAIRSTYLES } from './hairstyles';
+import { Screen, TabType, Hairstyle } from './types';
 import './App.css';
 
-// Женские прически (20)
-const FEMALE_HAIRSTYLES = [
-  { id: 1, name: 'Классическое каре', emoji: '💇‍♀️' },
-  { id: 2, name: 'Удлинённый боб (Лоб)', emoji: '✨' },
-  { id: 3, name: 'Пикси', emoji: '⭐' },
-  { id: 4, name: 'Голливудские локоны', emoji: '🌟' },
-  { id: 5, name: 'Каскад', emoji: '🌊' },
-  { id: 6, name: 'Пляжные волны', emoji: '🏖️' },
-  { id: 7, name: 'Шэг', emoji: '🔥' },
-  { id: 8, name: 'Прямые длинные', emoji: '💎' },
-  { id: 9, name: 'Кудри афро', emoji: '🌀' },
-  { id: 10, name: 'Французская коса', emoji: '🥐' },
-  { id: 11, name: 'Небрежный пучок', emoji: '🎀' },
-  { id: 12, name: 'Конский хвост', emoji: '🐴' },
-  { id: 13, name: 'Косы боксёр', emoji: '🥊' },
-  { id: 14, name: 'Мальвинка', emoji: '👸' },
-  { id: 15, name: 'Низкий пучок', emoji: '🎭' },
-  { id: 16, name: 'Асимметричный боб', emoji: '📐' },
-  { id: 17, name: 'Ретро волны', emoji: '🎬' },
-  { id: 18, name: 'Длинная чёлка', emoji: '💫' },
-  { id: 19, name: 'Объёмные локоны', emoji: '🌸' },
-  { id: 20, name: 'Гладкий хвост', emoji: '✨' },
-];
+const App: React.FC = () => {
+  // Состояния
+  const [screen, setScreen] = useState<Screen>('upload');
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [selectedStyle, setSelectedStyle] = useState<Hairstyle | null>(null);
+  const [customHairstyle, setCustomHairstyle] = useState<string>('');
+  const [resultImage, setResultImage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>('female');
+  const [isCapturing, setIsCapturing] = useState<boolean>(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<number>(0);
 
-// Мужские прически (20)
-const MALE_HAIRSTYLES = [
-  { id: 21, name: 'Фейд', emoji: '💈' },
-  { id: 22, name: 'Андеркат', emoji: '🔪' },
-  { id: 23, name: 'Помпадур', emoji: '👑' },
-  { id: 24, name: 'Кроп', emoji: '✂️' },
-  { id: 25, name: 'Квифф', emoji: '💨' },
-  { id: 26, name: 'Бокс', emoji: '🥊' },
-  { id: 27, name: 'Полубокс', emoji: '⚡' },
-  { id: 28, name: 'Канадка', emoji: '🍁' },
-  { id: 29, name: 'Цезарь', emoji: '🏛️' },
-  { id: 30, name: 'Мужской пучок', emoji: '🎯' },
-  { id: 31, name: 'Текстурная стрижка', emoji: '🌊' },
-  { id: 32, name: 'Под машинку', emoji: '🔌' },
-  { id: 33, name: 'Ёжик', emoji: '🦔' },
-  { id: 34, name: 'Британка', emoji: '🎩' },
-  { id: 35, name: 'Гранж', emoji: '🎸' },
-  { id: 36, name: 'Теннис', emoji: '🎾' },
-  { id: 37, name: 'Площадка', emoji: '📦' },
-  { id: 38, name: 'Фейд с узором', emoji: '🎨' },
-  { id: 39, name: 'Длинные мужские', emoji: '🦁' },
-  { id: 40, name: 'Боковой пробор', emoji: '👔' },
-];
-
-function App() {
-  const [screen, setScreen] = useState('upload');
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const [referenceImage, setReferenceImage] = useState(null);
-  const [selectedStyle, setSelectedStyle] = useState(null);
-  const [customHairstyle, setCustomHairstyle] = useState('');
-  const [resultImage, setResultImage] = useState(null);
-  const [activeTab, setActiveTab] = useState('female'); // 'female', 'male', 'reference'
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [cameraStream, setCameraStream] = useState(null);
-  const [error, setError] = useState(null);
-  const [progress, setProgress] = useState(0);
-
-  const fileInputRef = useRef(null);
-  const referenceInputRef = useRef(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
+  // Рефы
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const referenceInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Определить режим выбора
   const isReferenceMode = activeTab === 'reference';
-  const isCustomMode = customHairstyle.trim() && !isReferenceMode && !selectedStyle;
 
   // Получить текущий список причесок
-  const getCurrentHairstyles = () => {
+  const getCurrentHairstyles = (): Hairstyle[] => {
     if (activeTab === 'female') return FEMALE_HAIRSTYLES;
     if (activeTab === 'male') return MALE_HAIRSTYLES;
     return [];
   };
 
   // Загрузка основного фото
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
         setError('Файл слишком большой. Максимум 10MB');
@@ -89,7 +44,7 @@ function App() {
       }
       const reader = new FileReader();
       reader.onload = (event) => {
-        setUploadedImage(event.target.result);
+        setUploadedImage(event.target?.result as string);
         setError(null);
         setScreen('select');
       };
@@ -98,8 +53,8 @@ function App() {
   };
 
   // Загрузка фото-референса
-  const handleReferenceUpload = (e) => {
-    const file = e.target.files[0];
+  const handleReferenceUpload = (e: ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
     if (file) {
       if (file.size > 10 * 1024 * 1024) {
         setError('Файл слишком большой. Максимум 10MB');
@@ -107,7 +62,7 @@ function App() {
       }
       const reader = new FileReader();
       reader.onload = (event) => {
-        setReferenceImage(event.target.result);
+        setReferenceImage(event.target?.result as string);
         setError(null);
       };
       reader.readAsDataURL(file);
@@ -115,7 +70,7 @@ function App() {
   };
 
   // Запуск камеры
-  const startCamera = async () => {
+  const startCamera = async (): Promise<void> => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
@@ -125,12 +80,12 @@ function App() {
       setIsCapturing(true);
     } catch (err) {
       console.error('Camera error:', err);
-      setError('Не удалось получить доступ к камере: ' + err.message);
+      setError('Не удалось получить доступ к камере: ' + (err as Error).message);
     }
   };
 
   // Подключение потока к video элементу
-  React.useEffect(() => {
+  useEffect(() => {
     if (isCapturing && cameraStream && videoRef.current) {
       videoRef.current.srcObject = cameraStream;
       videoRef.current.play().catch(err => {
@@ -140,22 +95,25 @@ function App() {
   }, [isCapturing, cameraStream]);
 
   // Съёмка фото
-  const capturePhoto = () => {
+  const capturePhoto = (): void => {
     if (canvasRef.current && videoRef.current) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      canvas.getContext('2d').drawImage(video, 0, 0);
-      const imageData = canvas.toDataURL('image/jpeg', 0.9);
-      setUploadedImage(imageData);
-      stopCamera();
-      setScreen('select');
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+        setUploadedImage(imageData);
+        stopCamera();
+        setScreen('select');
+      }
     }
   };
 
   // Остановка камеры
-  const stopCamera = () => {
+  const stopCamera = (): void => {
     if (cameraStream) {
       cameraStream.getTracks().forEach((track) => track.stop());
       setCameraStream(null);
@@ -164,13 +122,13 @@ function App() {
   };
 
   // Выбор прически из списка
-  const selectStyle = (style) => {
+  const selectStyle = (style: Hairstyle): void => {
     setSelectedStyle(style);
     setCustomHairstyle('');
   };
 
   // Ввод кастомной прически
-  const handleCustomInput = (value) => {
+  const handleCustomInput = (value: string): void => {
     setCustomHairstyle(value);
     if (value.trim()) {
       setSelectedStyle(null);
@@ -178,7 +136,7 @@ function App() {
   };
 
   // Смена таба
-  const changeTab = (tab) => {
+  const changeTab = (tab: TabType): void => {
     setActiveTab(tab);
     setSelectedStyle(null);
     setCustomHairstyle('');
@@ -188,15 +146,15 @@ function App() {
   };
 
   // Проверка готовности к обработке
-  const isReadyToProcess = () => {
+  const isReadyToProcess = (): boolean => {
     if (isReferenceMode) {
       return referenceImage !== null;
     }
-    return selectedStyle || customHairstyle.trim();
+    return selectedStyle !== null || customHairstyle.trim() !== '';
   };
 
   // Получить название выбранной прически
-  const getSelectedName = () => {
+  const getSelectedName = (): string => {
     if (isReferenceMode && referenceImage) {
       return 'Прическа с фото';
     }
@@ -210,7 +168,9 @@ function App() {
   };
 
   // Отправка на обработку
-  const processImage = async () => {
+  const processImage = async (): Promise<void> => {
+    if (!uploadedImage) return;
+
     setScreen('processing');
     setError(null);
     setProgress(0);
@@ -229,13 +189,10 @@ function App() {
       let result;
 
       if (isReferenceMode && referenceImage) {
-        // Прическа с фото-референса
         result = await transformWithReference(uploadedImage, referenceImage);
       } else if (customHairstyle.trim()) {
-        // Кастомная прическа
         result = await transformCustom(uploadedImage, customHairstyle.trim());
       } else if (selectedStyle) {
-        // Прическа из списка
         result = await transformHairstyle(uploadedImage, selectedStyle.id);
       } else {
         throw new Error('Прическа не выбрана');
@@ -252,13 +209,13 @@ function App() {
       }
     } catch (err) {
       clearInterval(progressInterval);
-      setError(err.message || 'Ошибка при обработке');
+      setError((err as Error).message || 'Ошибка при обработке');
       setScreen('select');
     }
   };
 
   // Сброс
-  const reset = () => {
+  const reset = (): void => {
     setUploadedImage(null);
     setReferenceImage(null);
     setSelectedStyle(null);
@@ -272,7 +229,7 @@ function App() {
   };
 
   // Попробовать другую прическу
-  const tryAnother = () => {
+  const tryAnother = (): void => {
     setSelectedStyle(null);
     setCustomHairstyle('');
     setReferenceImage(null);
@@ -281,7 +238,8 @@ function App() {
   };
 
   // Сохранение результата
-  const saveResult = () => {
+  const saveResult = (): void => {
+    if (!resultImage) return;
     const link = document.createElement('a');
     const name = getSelectedName().replace(/\s+/g, '-');
     link.download = `styleme-${name}.jpg`;
@@ -290,7 +248,7 @@ function App() {
   };
 
   // Шаринг
-  const shareResult = () => {
+  const shareResult = (): void => {
     if (navigator.share) {
       navigator.share({
         title: 'Мой новый образ от StyleMe',
@@ -400,14 +358,14 @@ function App() {
         )}
 
         {/* Экран выбора */}
-        {screen === 'select' && (
+        {screen === 'select' && uploadedImage && (
           <div className="screen select-screen">
             <div className="preview-image">
               <img src={uploadedImage} alt="Твоё фото" />
               <div className="preview-badge">Твоё фото загружено ✓</div>
             </div>
 
-            {/* Табы: Женские / Мужские / С фото */}
+            {/* Табы */}
             <div className="gender-tabs three-tabs">
               <button
                 className={`gender-tab ${activeTab === 'female' ? 'active' : ''}`}
@@ -431,17 +389,16 @@ function App() {
 
             {/* Контент в зависимости от таба */}
             {isReferenceMode ? (
-              /* Раздел "Прическа с фото" */
               <div className="reference-section">
                 <div className="reference-info">
                   <h2>📷 Прическа с фото</h2>
-                  <p>Загрузи фото с прической, которую хочешь примерить. AI скопирует эту прическу на твоё фото.</p>
+                  <p>Загрузи фото с прической, которую хочешь примерить.</p>
                 </div>
 
                 {referenceImage ? (
                   <div className="reference-preview">
                     <div className="reference-image-container">
-                      <img src={referenceImage} alt="Референс прически" />
+                      <img src={referenceImage} alt="Референс" />
                       <button 
                         className="reference-remove"
                         onClick={() => setReferenceImage(null)}
@@ -458,7 +415,7 @@ function App() {
                   >
                     <span className="reference-upload-icon">📸</span>
                     <span className="reference-upload-text">Загрузить фото с прической</span>
-                    <span className="reference-upload-hint">Найди фото знаменитости или модели с нужной прической</span>
+                    <span className="reference-upload-hint">Найди фото с нужной прической</span>
                   </button>
                 )}
 
@@ -471,7 +428,6 @@ function App() {
                 />
               </div>
             ) : (
-              /* Разделы "Женские" и "Мужские" */
               <>
                 {/* Поле ввода своей прически */}
                 <div className="custom-input-section">
@@ -566,7 +522,7 @@ function App() {
         )}
 
         {/* Экран результата */}
-        {screen === 'result' && (
+        {screen === 'result' && uploadedImage && resultImage && (
           <div className="screen result-screen">
             <div className="result-header">
               <h2>Вот твой новый образ! 🎉</h2>
@@ -604,6 +560,6 @@ function App() {
       </footer>
     </div>
   );
-}
+};
 
 export default App;

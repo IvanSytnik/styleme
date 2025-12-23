@@ -3,11 +3,14 @@
  * Все секретные ключи берутся из .env файла
  */
 
-require('dotenv').config();
+import dotenv from 'dotenv';
+import { AppConfig } from './types';
 
-module.exports = {
+dotenv.config();
+
+const config: AppConfig = {
   // Сервер
-  port: process.env.PORT || 3001,
+  port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   
   // CORS - разрешённые домены фронтенда
@@ -15,7 +18,7 @@ module.exports = {
   
   // Replicate API (nano-banana)
   replicate: {
-    apiToken: process.env.REPLICATE_API_TOKEN,
+    apiToken: process.env.REPLICATE_API_TOKEN || '',
     model: 'google/nano-banana',
   },
   
@@ -25,3 +28,5 @@ module.exports = {
     maxImageDimension: 1024,
   },
 };
+
+export default config;
