@@ -5,15 +5,21 @@ RUN apk add --no-cache vips-dev
 
 WORKDIR /app
 
-# Копируем package.json и устанавливаем зависимости
+# Копируем package.json
 COPY package*.json ./
-RUN npm ci --only=production
-RUN npm install typescript
 
-# Копируем исходный код и собираем
+# Устанавливаем ВСЕ зависимости (включая dev для компиляции)
+RUN npm ci
+
+# Копируем исходный код
 COPY tsconfig.json ./
 COPY src ./src
+
+# Компилируем TypeScript
 RUN npx tsc
 
-# Запускаем собранный JS
+# Удаляем devDependencies для production
+RUN npm prune --production
+
+# Запускаем
 CMD ["node", "dist/server.js"]
