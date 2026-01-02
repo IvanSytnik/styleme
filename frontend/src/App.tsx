@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, ChangeEvent } from 'react';
 import { transformHairstyle, transformCustom, transformWithReference } from './api';
 import { FEMALE_HAIRSTYLES, MALE_HAIRSTYLES } from './hairstyles';
 import { Screen, TabType, Hairstyle } from './types';
+import { useAdCredits, BannerAd, RewardedAd, WatchAdButton } from './components/Ads';
 import './App.css';
 
 const App: React.FC = () => {
@@ -17,6 +18,17 @@ const App: React.FC = () => {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
+
+  // Реклама
+  const { 
+    credits, 
+    hasGeneration, 
+    watchAd, 
+    useGeneration, 
+    adsNeeded,
+    showRewardedAd,
+    setShowRewardedAd 
+  } = useAdCredits();
 
   // Рефы
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -167,9 +179,26 @@ const App: React.FC = () => {
     return '';
   };
 
+  // Обработка рекламы перед генерацией
+  const handleProcessClick = (): void => {
+    if (!hasGeneration) {
+      // Нет генераций — показываем рекламу
+      setShowRewardedAd(true);
+    } else {
+      // Есть генерация — запускаем обработку
+      processImage();
+    }
+  };
+
   // Отправка на обработку
   const processImage = async (): Promise<void> => {
     if (!uploadedImage) return;
+
+    // Проверяем и используем генерацию
+    if (!useGeneration()) {
+      setError('Нет доступных генераций. Посмотрите рекламу.');
+      return;
+    }
 
     setScreen('processing');
     setError(null);
@@ -257,8 +286,20 @@ const App: React.FC = () => {
     }
   };
 
+  // Обработка награды за рекламу
+  const handleAdReward = (): void => {
+    watchAd();
+  };
+
   return (
     <div className="app">
+      {/* Rewarded Ad Modal */}
+      <RewardedAd 
+        isVisible={showRewardedAd}
+        onReward={handleAdReward}
+        onClose={() => setShowRewardedAd(false)}
+      />
+
       {/* Header */}
       <header className="header">
         <div className="header-content">
@@ -287,6 +328,13 @@ const App: React.FC = () => {
               </h1>
               <p>Загрузи фото и примерь 40+ причесок с помощью AI</p>
             </div>
+
+            {/* Блок кредитов */}
+            <WatchAdButton 
+              onClick={() => setShowRewardedAd(true)}
+              adsNeeded={adsNeeded}
+              generations={credits.generations}
+            />
 
             {!isCapturing ? (
               <div className="upload-options">
@@ -364,6 +412,13 @@ const App: React.FC = () => {
               <img src={uploadedImage} alt="Твоё фото" />
               <div className="preview-badge">Твоё фото загружено ✓</div>
             </div>
+
+            {/* Блок кредитов */}
+            <WatchAdButton 
+              onClick={() => setShowRewardedAd(true)}
+              adsNeeded={adsNeeded}
+              generations={credits.generations}
+            />
 
             {/* Табы */}
             <div className="gender-tabs three-tabs">
@@ -474,8 +529,11 @@ const App: React.FC = () => {
             {/* Кнопка обработки */}
             {isReadyToProcess() && (
               <div className="sticky-button">
-                <button onClick={processImage} className="btn btn-primary btn-large">
-                  ✨ Примерить «{getSelectedName()}»
+                <button onClick={handleProcessClick} className="btn btn-primary btn-large">
+                  {hasGeneration 
+                    ? `✨ Примерить «${getSelectedName()}»`
+                    : `📺 Посмотреть рекламу для генерации`
+                  }
                 </button>
               </div>
             )}
@@ -540,6 +598,13 @@ const App: React.FC = () => {
               </div>
             </div>
 
+            {/* Кредиты на экране результата */}
+            <WatchAdButton 
+              onClick={() => setShowRewardedAd(true)}
+              adsNeeded={adsNeeded}
+              generations={credits.generations}
+            />
+
             <div className="result-actions">
               <button onClick={saveResult} className="btn btn-primary">
                 💾 Сохранить результат
@@ -554,6 +619,9 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Баннер внизу */}
+      <BannerAd position="bottom" />
 
       <footer className="footer">
         <p>Создано с ❤️ для поиска идеального стиля</p>
