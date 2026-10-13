@@ -80,7 +80,7 @@ locale segment. No first-visit picker UI.
 `ru.json` is the existing source of truth (current hardcoded Russian
 names). `en.json` was drafted from the English hairstyle-prompt corpus
 (`prompts.ts`), which already contains correct hairdressing terminology.
-`de.json` / `uk.json` are Claude drafts, **not native-reviewed** — flagged
+`de.json` / `uk.json` are machine-translated drafts, **not native-reviewed** — flagged
 as a known gap in the smoke checklist below, not a Day 7 blocker.
 
 ### Post-delivery hotfix #6 — LanguageSwitcher never synced the cookie for `en`
