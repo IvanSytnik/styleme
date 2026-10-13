@@ -49,3 +49,11 @@ apps/web/.env.e2e
 apps/web/test-results/
 apps/web/playwright-report/
 apps/web/.next/
+
+# local dev notes
+CLAUDE.md
+AGENTS.md
+HANDOFF.md
+PROJECT_MEMORY.md
+AUDIT_REPORT.md
+.claude/
