@@ -7,7 +7,7 @@ Accepted (Day 7, 2026-07-03).
 StyleMe needed en/de/uk/ru locales. Style names were hardcoded Russian
 strings inside `@styleme/shared`, and the server persisted the display
 string directly into `generations.style_name` / returned it in
-`TransformResult.style`. The domain-expansion strategy (PROJECT_MEMORY)
+`TransformResult.style`. The domain-expansion strategy
 also required catalog-as-data seams (Seam 2/3) before a second domain
 can be added cheaply.
 

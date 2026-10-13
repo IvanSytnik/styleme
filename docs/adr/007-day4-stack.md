@@ -78,7 +78,7 @@ moderation, so we don't duplicate the moderation pipeline.
 landscape. Mitigation: the daily quota (3 free) caps loss at $0.12 per user
 per day. Not worth blocking Day 4.
 
-**Tracked in backlog** in `PROJECT_MEMORY.md`.
+**Tracked in backlog.**
 
 ### 5. "Watch ad" button: **visible-but-disabled with "Soon" badge**
 

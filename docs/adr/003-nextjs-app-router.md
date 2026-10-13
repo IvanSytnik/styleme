@@ -27,7 +27,7 @@ Rationale:
 - TypeScript-native `next.config.ts`, Turbopack out of the box.
 
 ### Negative
-- App Router mental model is non-trivial (server vs client components, caching boundaries, Cache Components). Mitigated by `AGENTS.md` and project conventions in this repo.
+- App Router mental model is non-trivial (server vs client components, caching boundaries, Cache Components). Mitigated by project conventions documented in this repo.
 - Heavier than Vite. Acceptable cost given the landing/SEO requirement.
 
 ## Alternatives considered
