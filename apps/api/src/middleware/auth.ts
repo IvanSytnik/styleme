@@ -164,7 +164,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     }
     req.user = user;
     next();
-  })();
+  })().catch(next);
 }
 
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
@@ -178,5 +178,5 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
     const user = await verifyToken(token);
     if (user) req.user = user;
     next();
-  })();
+  })().catch(next);
 }

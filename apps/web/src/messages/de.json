@@ -213,6 +213,10 @@
       "title": "Generierung fehlgeschlagen",
       "body": "Der KI-Dienst hatte Probleme bei der Verarbeitung Ihres Bildes. Bitte versuchen Sie es erneut."
     },
+    "SERVICE_UNAVAILABLE": {
+      "title": "Vorübergehend nicht verfügbar",
+      "body": "Wir können gerade keine neuen Looks erstellen. Ihre Credits wurden nicht verbraucht. Bitte versuchen Sie es in ein paar Minuten erneut."
+    },
     "VALIDATION_FAILED": {
       "title": "Ungültige Anfrage",
       "body": "Bitte überprüfen Sie Ihr Bild und versuchen Sie es erneut."

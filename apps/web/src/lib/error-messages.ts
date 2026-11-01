@@ -38,6 +38,7 @@ const BEHAVIOR: Record<string, ErrorBehavior> = {
   QUOTA_EXCEEDED: { retryable: false, needsCredits: true },
   RATE_LIMITED: { retryable: true, needsCredits: false },
   UPSTREAM_FAILED: { retryable: true, needsCredits: false },
+  SERVICE_UNAVAILABLE: { retryable: true, needsCredits: false },
   VALIDATION_FAILED: { retryable: false, needsCredits: false },
   INVALID_IMAGE: { retryable: false, needsCredits: false },
   FILE_TOO_LARGE: { retryable: false, needsCredits: false },

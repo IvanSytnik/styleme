@@ -213,6 +213,10 @@
       "title": "Generation failed",
       "body": "The AI service had trouble processing your image. Please try again."
     },
+    "SERVICE_UNAVAILABLE": {
+      "title": "Temporarily unavailable",
+      "body": "We can't create new looks right now. Your credits weren't used. Please try again in a few minutes."
+    },
     "VALIDATION_FAILED": {
       "title": "Invalid request",
       "body": "Please check your image and try again."

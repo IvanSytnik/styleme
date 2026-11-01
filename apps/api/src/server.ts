@@ -23,6 +23,7 @@ import pinoHttp from 'pino-http';
 import { LIMITS } from '@styleme/shared';
 
 import { env, hasSupabase, hasUpstash, isProd } from './env';
+import { installProcessGuards } from './lib/process-guards';
 import { logger } from './logger';
 import { errorHandler } from './middleware/error-handler';
 import { ipRateLimit } from './middleware/rate-limit';
@@ -32,6 +33,8 @@ import { generationsRouter } from './routes/generations';
 import { hairstylesRouter } from './routes/hairstyles';
 import { healthRouter } from './routes/health';
 import { transformRouter } from './routes/transform';
+
+installProcessGuards(logger);
 
 const app = express();
 
