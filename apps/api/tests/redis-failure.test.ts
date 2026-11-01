@@ -9,12 +9,13 @@
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
-import express, { type NextFunction, type Request, type Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const stubs = vi.hoisted(() => ({
   env: {
     REPLICATE_API_TOKEN: 'stub',
+    FRONTEND_URL: 'http://localhost:3000',
     SUPABASE_URL: undefined as string | undefined,
     SUPABASE_JWT_SECRET: undefined as string | undefined,
   },
@@ -27,7 +28,6 @@ const stubs = vi.hoisted(() => ({
     ttl: vi.fn(),
     del: vi.fn(),
   },
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   replicateRun: vi.fn(),
   listGenerations: vi.fn(),
 }));
@@ -41,7 +41,11 @@ vi.mock('../src/env', () => ({
   isProd: false,
   isReplicateMock: false,
 }));
-vi.mock('../src/logger', () => ({ logger: stubs.logger }));
+// A real silent pino: pino-http in createApp() needs the full logger API.
+vi.mock('../src/logger', async () => {
+  const { default: pino } = await import('pino');
+  return { logger: pino({ level: 'silent' }) };
+});
 vi.mock('../src/lib/redis', () => ({ redis: stubs.redis }));
 vi.mock('../src/db/generations', () => ({
   insertGeneration: vi.fn(),
@@ -54,14 +58,11 @@ vi.mock('replicate', () => ({
   },
 }));
 
+import { createApp } from '../src/app';
 import { createUnhandledRejectionHandler, installProcessGuards } from '../src/lib/process-guards';
+import { logger } from '../src/logger';
 import { optionalAuth } from '../src/middleware/auth';
-import { errorHandler } from '../src/middleware/error-handler';
 import { ipRateLimit, transformRateLimit } from '../src/middleware/rate-limit';
-import { billingRouter } from '../src/routes/billing';
-import { generationsRouter } from '../src/routes/generations';
-import { hairstylesRouter } from '../src/routes/hairstyles';
-import { transformRouter } from '../src/routes/transform';
 
 /** A broken handler never responds; fail fast instead of at the 30 s default. */
 const REQUEST_TIMEOUT_MS = 2_000;
@@ -75,19 +76,6 @@ const redisDown = (): void => {
   stubs.redis.ttl.mockRejectedValue(failure);
   stubs.redis.del.mockRejectedValue(failure);
 };
-
-/** Same order as server.ts, which can't be imported because it listens on load. */
-const app = express();
-app.use((req, _res, next) => {
-  req.id = 'test-req-id';
-  next();
-});
-app.use('/api', ipRateLimit);
-app.use(hairstylesRouter);
-app.use(billingRouter);
-app.use(transformRouter);
-app.use(generationsRouter);
-app.use(errorHandler);
 
 let server: Server;
 let baseUrl: string;
@@ -108,7 +96,7 @@ const expectNoUnhandledRejections = async (): Promise<void> => {
 beforeAll(async () => {
   process.on('unhandledRejection', onUnhandled);
   await new Promise<void>((resolve) => {
-    server = app.listen(0, '127.0.0.1', resolve);
+    server = createApp().listen(0, '127.0.0.1', resolve);
   });
   baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -132,11 +120,13 @@ describe('Redis down: read routes fail open', () => {
   beforeEach(redisDown);
 
   it('passes a route that does not use Redis, and logs a warning with the request id', async () => {
+    const warn = vi.spyOn(logger, 'warn');
+
     const res = await call('GET', '/api/hairstyles');
 
     expect(res.status).toBe(200);
-    expect(stubs.logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ reqId: 'test-req-id', err: expect.any(Error) }),
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reqId: res.headers.get('x-request-id'), err: expect.any(Error) }),
       expect.stringContaining('fail open'),
     );
   });

@@ -83,7 +83,7 @@ if (isProd) {
   // FRONTEND_URL carries a localhost default for dev convenience, so the parsed
   // value is never absent — check the RAW one. Without this, a prod deploy that
   // forgot the var starts happily and then rejects every browser request: CORS
-  // is deliberately single-origin (server.ts), so the default pins the only
+  // is deliberately single-origin (app.ts), so the default pins the only
   // allowed origin to http://localhost:3000. Empty string reads as absent, per
   // the optionalEnv rationale above.
   const rawFrontendUrl = process.env.FRONTEND_URL;
