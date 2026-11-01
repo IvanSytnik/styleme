@@ -48,7 +48,7 @@ function applyResult(res: Response, next: NextFunction, result: RateLimitResult)
 
 export async function ipRateLimit(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // `req.ip` respects `app.set('trust proxy', ...)` set in server.ts
+    // `req.ip` respects `app.set('trust proxy', ...)` set in app.ts
     const ip = req.ip ?? 'unknown';
     let result: RateLimitResult;
     try {
