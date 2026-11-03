@@ -7,26 +7,29 @@
  * This suite runs the IDENTICAL scenario set against BOTH backends.
  *
  * The Upstash half runs only when TEST_UPSTASH_REDIS_REST_URL /
- * TEST_UPSTASH_REDIS_REST_TOKEN are set (a DEDICATED test database — never
- * the production one). Locally: export them in your shell. In CI: repo
- * secrets. When absent, the Upstash half is skipped with a visible notice
- * so a green run without it is never mistaken for full coverage.
+ * TEST_UPSTASH_REDIS_REST_TOKEN are set: the dev database, shared with local
+ * development (ADR-013). The suite refuses to load if the URL points at a
+ * production host. Locally: apps/api/.env or the shell. In CI: repo secrets.
+ * When absent, the Upstash half is skipped with a visible notice so a green
+ * run without it is never mistaken for full coverage.
  *
- * All keys used here go through the real key builders (ad:nonce:*,
- * ad:daily:*) with UUID user ids unique per test run — no collisions with
- * real data even if pointed at a shared dev database by mistake, and
- * expired leftovers self-clean via TTL.
+ * Every Upstash key gets a per-run prefix (`test:<run-id>:`), so runs never
+ * collide with local development or with each other, and afterAll deletes
+ * exactly the keys under this run's prefix.
  */
 
 import { randomUUID } from 'node:crypto';
 
-import { describe, expect, it } from 'vitest';
+import { Redis } from '@upstash/redis';
+import { afterAll, describe, expect, it } from 'vitest';
 
 import { AD_REWARDS } from '@styleme/shared';
+import { assertNoProductionHosts } from '@styleme/shared/env-guard';
 
 import { createAdSessionService } from '../src/lib/ad-session';
 import { createQuotaService } from '../src/lib/quota';
 import { InMemoryRedis, createUpstashRedis, type RedisLike } from '../src/lib/redis';
+import { withKeyPrefix } from '../src/lib/redis-prefix';
 
 interface Backend {
   name: string;
@@ -38,11 +41,16 @@ const upstashUrl = process.env.TEST_UPSTASH_REDIS_REST_URL;
 const upstashToken = process.env.TEST_UPSTASH_REDIS_REST_TOKEN;
 const hasTestUpstash = Boolean(upstashUrl && upstashToken);
 
+// Before any client exists: never run this suite against production.
+assertNoProductionHosts({ TEST_UPSTASH_REDIS_REST_URL: upstashUrl });
+
+const RUN_PREFIX = `test:${randomUUID()}:`;
+
 const backends: Backend[] = [
   { name: 'in-memory', make: () => new InMemoryRedis(), enabled: true },
   {
     name: 'upstash',
-    make: () => createUpstashRedis(upstashUrl!, upstashToken!),
+    make: () => withKeyPrefix(createUpstashRedis(upstashUrl!, upstashToken!), RUN_PREFIX),
     enabled: hasTestUpstash,
   },
 ];
@@ -54,6 +62,30 @@ if (!hasTestUpstash) {
       'This run does NOT prove backend parity.\n',
   );
 }
+
+/** Deletes every key under this run's prefix; returns how many were deleted. */
+async function deleteRunKeys(raw: Redis): Promise<number> {
+  let deleted = 0;
+  let cursor: string | number = 0;
+  do {
+    const [next, keys]: [string | number, string[]] = await raw.scan(cursor, {
+      match: `${RUN_PREFIX}*`,
+      count: 100,
+    });
+    if (keys.length > 0) deleted += await raw.del(...keys);
+    cursor = next;
+  } while (String(cursor) !== '0');
+  return deleted;
+}
+
+afterAll(async () => {
+  if (!hasTestUpstash) return;
+  const raw = new Redis({ url: upstashUrl!, token: upstashToken! });
+  const deleted = await deleteRunKeys(raw);
+  // eslint-disable-next-line no-console
+  console.info(`[contract] cleaned up ${deleted} key(s) under ${RUN_PREFIX}`);
+  expect(await deleteRunKeys(raw)).toBe(0);
+});
 
 /**
  * Clock controller: lets us "watch the ad" instantly. The service takes an

@@ -13,11 +13,16 @@
     "./hairstyles/prompts": {
       "types": "./dist/hairstyles/prompts.d.ts",
       "default": "./dist/hairstyles/prompts.js"
+    },
+    "./env-guard": {
+      "types": "./dist/env-guard.d.ts",
+      "default": "./dist/env-guard.js"
     }
   },
   "typesVersions": {
     "*": {
-      "hairstyles/prompts": ["dist/hairstyles/prompts.d.ts"]
+      "hairstyles/prompts": ["dist/hairstyles/prompts.d.ts"],
+      "env-guard": ["dist/env-guard.d.ts"]
     }
   },
   "files": [
