@@ -22,12 +22,16 @@
  * every consumer MUST coerce (see toInt/decodePayload patterns). Never
  * store JSON; store flat delimited strings. This is enforced by
  * tests/ad-session.contract.test.ts.
+ *
+ * ADR-013: the singleton is wrapped with the environment key prefix
+ * (`dev:` outside production, none in production) — see redis-prefix.ts.
  */
 
 import { Redis } from '@upstash/redis';
 
-import { env, hasUpstash } from '../env';
+import { env, hasUpstash, redisKeyPrefix } from '../env';
 import { logger } from '../logger';
+import { withKeyPrefix } from './redis-prefix';
 
 export interface RedisLike {
   /**
@@ -105,10 +109,10 @@ export function createUpstashRedis(url: string, token: string): RedisLike {
 let _redis: RedisLike;
 if (hasUpstash) {
   _redis = createUpstashRedis(env.UPSTASH_REDIS_REST_URL!, env.UPSTASH_REDIS_REST_TOKEN!);
-  logger.info('[redis] Using Upstash');
+  logger.info({ keyPrefix: redisKeyPrefix || '(none)' }, '[redis] Using Upstash');
 } else {
   _redis = new InMemoryRedis();
   logger.warn('[redis] Using in-memory fallback (development only)');
 }
 
-export const redis = _redis;
+export const redis = withKeyPrefix(_redis, redisKeyPrefix);
